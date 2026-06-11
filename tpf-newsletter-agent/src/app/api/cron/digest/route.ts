@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { generateWeeklyDigest } from '@/lib/services/digest.service';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 export async function GET(request: Request) {
   try {
