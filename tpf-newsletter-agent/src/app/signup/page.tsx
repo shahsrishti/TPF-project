@@ -2,16 +2,16 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Bot, Loader2 } from "lucide-react"
+import { Bot, ArrowRight, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSignup = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setTimeout(() => {
@@ -39,12 +39,21 @@ export default function LoginPage() {
             </div>
             <span className="font-bold text-2xl tracking-tight text-white">TPF Research</span>
           </Link>
-          <h1 className="text-2xl font-semibold tracking-tight text-white mb-2">Welcome back</h1>
-          <p className="text-gray-400">Sign in to your dashboard</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-white mb-2">Create your account</h1>
+          <p className="text-gray-400">Join to start automating your research</p>
         </div>
 
         <div className="glass-card p-8 rounded-3xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl shadow-2xl">
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300">Full Name</label>
+              <Input 
+                type="text" 
+                placeholder="John Doe" 
+                required 
+                className="bg-white/5 border-white/10 rounded-xl h-11 focus:border-violet-500/50 text-white"
+              />
+            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-300">Email</label>
               <Input 
@@ -55,10 +64,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-300">Password</label>
-                <Link href="#" className="text-xs text-violet-400 hover:text-violet-300">Forgot password?</Link>
-              </div>
+              <label className="text-sm font-medium text-gray-300">Password</label>
               <Input 
                 type="password" 
                 placeholder="••••••••" 
@@ -71,7 +77,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full h-11 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium mt-6 transition-all"
             >
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sign In"}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sign Up"}
             </Button>
           </form>
 
@@ -98,9 +104,9 @@ export default function LoginPage() {
           </Button>
 
           <p className="mt-6 text-center text-sm text-gray-400">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-violet-400 hover:text-violet-300 font-medium">
-              Sign Up
+            Already have an account?{" "}
+            <Link href="/login" className="text-violet-400 hover:text-violet-300 font-medium">
+              Sign In
             </Link>
           </p>
         </div>

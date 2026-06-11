@@ -21,7 +21,7 @@ export default function LandingPage() {
               Sign In
             </Link>
             <Link 
-              href="/dashboard" 
+              href="/signup" 
               className="text-xs sm:text-sm font-medium bg-white text-black px-4 py-2 sm:px-5 sm:py-2.5 rounded-full hover:bg-gray-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)] whitespace-nowrap"
             >
               <span className="hidden sm:inline">Go to Dashboard</span>
@@ -48,7 +48,7 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <Link 
-              href="/dashboard" 
+              href="/signup" 
               className="h-14 px-8 inline-flex items-center justify-center rounded-full bg-white text-black font-semibold text-lg hover:bg-gray-200 transition-all gap-2 w-full sm:w-auto shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:scale-105"
             >
               Get Started Free
@@ -61,7 +61,7 @@ export default function LandingPage() {
           <FeatureCard 
             icon={<Database className="h-6 w-6 text-violet-400" />}
             title="Automated Ingestion"
-            description="Continuously monitors trusted sources like OpenAI, Anthropic, and Product Hunt for the latest updates."
+            description="Continuously monitors trusted sources like OpenAI and Hugging Face for the latest updates."
           />
           <FeatureCard 
             icon={<Bot className="h-6 w-6 text-blue-400" />}

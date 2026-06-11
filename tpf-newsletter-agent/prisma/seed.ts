@@ -8,11 +8,6 @@ async function main() {
       rssUrl: 'https://openai.com/blog/rss.xml',
     },
     {
-      name: 'Google AI Blog',
-      url: 'https://blog.google/technology/ai/',
-      rssUrl: 'https://blog.google/technology/ai/rss/',
-    },
-    {
       name: 'Hugging Face Blog',
       url: 'https://huggingface.co/blog',
       rssUrl: 'https://huggingface.co/blog/feed.xml',

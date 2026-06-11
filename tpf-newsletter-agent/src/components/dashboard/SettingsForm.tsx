@@ -23,8 +23,23 @@ export default function SettingsForm({ initialGoogle, initialNotion }: { initial
     isActive: initialNotion?.isActive || false
   })
 
+  const [userConfig, setUserConfig] = useState({
+    name: "Admin User",
+    email: "admin@tpfresearch.com",
+    theme: "dark"
+  })
+
+  const [savingUser, setSavingUser] = useState(false)
   const [savingGoogle, setSavingGoogle] = useState(false)
   const [savingNotion, setSavingNotion] = useState(false)
+
+  const handleSaveUser = async () => {
+    setSavingUser(true)
+    // Simulate network request
+    await new Promise(resolve => setTimeout(resolve, 800))
+    setSavingUser(false)
+    toast.success("User profile updated successfully")
+  }
 
   const handleSaveGoogle = async () => {
     setSavingGoogle(true)
@@ -72,6 +87,56 @@ export default function SettingsForm({ initialGoogle, initialNotion }: { initial
 
   return (
     <div className="grid gap-6">
+      <Card className="glass-card border-violet-500/20 shadow-[0_0_15px_rgba(139,92,246,0.05)]">
+        <CardHeader>
+          <CardTitle>User Profile</CardTitle>
+          <CardDescription className="text-gray-400">Manage your personal information and preferences</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="user-name">Full Name</Label>
+              <Input 
+                id="user-name" 
+                value={userConfig.name}
+                onChange={(e) => setUserConfig({ ...userConfig, name: e.target.value })}
+                className="bg-white/5 border-white/10 rounded-xl focus:border-violet-500/50" 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="user-email">Email Address</Label>
+              <Input 
+                id="user-email" 
+                type="email"
+                value={userConfig.email}
+                onChange={(e) => setUserConfig({ ...userConfig, email: e.target.value })}
+                className="bg-white/5 border-white/10 rounded-xl focus:border-violet-500/50" 
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Theme Preference</Label>
+            <div className="flex gap-4">
+              <Label className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="theme" value="dark" checked={userConfig.theme === 'dark'} onChange={() => setUserConfig({...userConfig, theme: 'dark'})} className="accent-violet-500" />
+                <span>Dark</span>
+              </Label>
+              <Label className="flex items-center gap-2 cursor-pointer opacity-50">
+                <input type="radio" name="theme" value="light" disabled className="accent-violet-500" />
+                <span>Light (Coming Soon)</span>
+              </Label>
+            </div>
+          </div>
+          <Button 
+            onClick={handleSaveUser} 
+            disabled={savingUser}
+            className="bg-violet-600 text-white hover:bg-violet-700 rounded-xl"
+          >
+            {savingUser ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Save Profile
+          </Button>
+        </CardContent>
+      </Card>
       <Card className="glass-card">
         <CardHeader>
           <div className="flex items-center justify-between">

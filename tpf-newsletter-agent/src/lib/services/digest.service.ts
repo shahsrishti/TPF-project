@@ -1,5 +1,6 @@
 import { prisma } from '../db/prisma';
 import { subDays } from 'date-fns';
+import { generateAIResponse } from './openrouter.service';
 
 export async function generateWeeklyDigest() {
   const oneWeekAgo = subDays(new Date(), 7);
@@ -23,9 +24,18 @@ export async function generateWeeklyDigest() {
   let markdown = `# AI & Product Weekly Digest\n\n`;
   markdown += `*Generated on ${new Date().toLocaleDateString()}*\n\n`;
 
-  markdown += `## Executive Summary\n\n`;
-  const topArticles = articles.slice(0, 3);
-  markdown += `This week saw ${articles.length} major updates. Key highlights include ${topArticles.map(a => a.title).join(', ')}.\n\n`;
+  const topArticles = articles.slice(0, 5);
+  
+  // AI-Generated Executive Summary
+  const systemPrompt = "You are the Editor-in-Chief of a premium AI & Product newsletter. Write an engaging, 2-paragraph executive summary highlighting the major themes from the provided top news articles of the week. Write directly to the reader. Be professional but captivating. Do not list the articles, just synthesize the trends.";
+  const userPrompt = `Here are the top articles this week:\n` + topArticles.map(a => `- ${a.title}: ${a.summary}`).join('\n');
+  
+  try {
+    const aiSummary = await generateAIResponse(systemPrompt, userPrompt);
+    markdown += `## Executive Summary\n\n${aiSummary}\n\n`;
+  } catch (err) {
+    markdown += `## Executive Summary\n\nThis week saw ${articles.length} major updates. Key highlights include ${topArticles.slice(0,3).map(a => a.title).join(', ')}.\n\n`;
+  }
 
   for (const category of categories) {
     const categoryArticles = articles.filter(a => a.category === category);

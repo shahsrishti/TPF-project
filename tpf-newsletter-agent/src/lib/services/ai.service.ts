@@ -1,8 +1,7 @@
-import { GoogleGenAI } from '@google/genai';
+import { generateAIResponse } from './openrouter.service';
 import { prisma } from '../db/prisma';
 
-// Initialize the Google Gen AI client. It automatically picks up GEMINI_API_KEY from environment.
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// The client is initialized dynamically inside the function to pick up env updates
 
 const systemPrompt = `You are an expert AI & Product Research Analyst. Your job is to analyze article content and extract structured insights for a newsletter.
 
@@ -134,20 +133,12 @@ export async function processArticles() {
       let retries = 3;
       while (retries > 0 && !responseText) {
         try {
-          const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-              systemInstruction: systemPrompt,
-              responseMimeType: "application/json",
-            }
-          });
-          responseText = response.text;
+          responseText = await generateAIResponse(systemPrompt, prompt, true);
         } catch (err: any) {
           retries--;
           const errMsg = err.message || '';
           // Detect hard quota limits
-          if (errMsg.includes('429') && errMsg.includes('credits are depleted')) {
+          if (errMsg.includes('429') || errMsg.includes('insufficient_quota')) {
              hitDailyQuota = true;
              throw err; // Break out immediately
           }
@@ -158,7 +149,7 @@ export async function processArticles() {
         }
       }
 
-      if (!responseText) throw new Error("No response from Gemini");
+      if (!responseText) throw new Error("No response from AI Provider");
 
       const data = JSON.parse(responseText);
 

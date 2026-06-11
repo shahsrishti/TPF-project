@@ -1,25 +1,31 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
+import { generateAIResponse } from '@/lib/services/openrouter.service';
 import { prisma } from '@/lib/db/prisma';
 
 export const dynamic = 'force-dynamic';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(request: Request) {
   try {
     const { message } = await request.json();
     
     // Simple retrieval: Get last 20 processed articles for context
-    const recentArticles = await prisma.article.findMany({
+    let recentArticles = await prisma.article.findMany({
       where: { isProcessed: true },
       orderBy: { date: 'desc' },
       take: 20,
     });
+
+    // Fallback to unprocessed articles if no processed articles exist
+    if (recentArticles.length === 0) {
+      recentArticles = await prisma.article.findMany({
+        orderBy: { heuristicScore: 'desc' },
+        take: 20,
+      });
+    }
     
     let contextStr = "Here is the latest AI & Product News context:\n\n";
     for (const article of recentArticles) {
-      contextStr += `- ${article.title} (Score: ${article.importanceScore}): ${article.summary}\n`;
+      contextStr += `- ${article.title} (Score: ${article.importanceScore || article.heuristicScore}): ${article.summary || article.contentSnippet}\n`;
     }
 
     const prompt = `You are a highly professional AI & Product Research Assistant. Your job is to answer the user's question clearly and concisely using the provided news context. 
@@ -36,12 +42,12 @@ ${contextStr}
 User Question: ${message}
 Answer:`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+    const responseText = await generateAIResponse(
+      "You are a helpful AI Assistant. Answer based on the context.", 
+      prompt
+    );
 
-    return NextResponse.json({ reply: response.text });
+    return NextResponse.json({ reply: responseText });
   } catch (error) {
     console.error('Chat error:', error);
     return NextResponse.json({ error: 'Failed to generate response' }, { status: 500 });
