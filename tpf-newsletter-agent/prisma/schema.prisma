@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Article {
+  id                String   @id @default(uuid())
+  title             String
+  url               String   @unique
+  sourceId          String
+  source            Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  author            String?
+  date              DateTime
+  summary           String?
+  category          String?
+  whyItMatters      String?
+  importanceScore   Int?
+  tpfRelevanceScore Int?
+  keywords          String?  // Stored as JSON string or comma-separated
+  trends            String?  // Stored as JSON string or comma-separated
+  contentSnippet    String?
+  isProcessed       Boolean  @default(false)
+  
+  // Free-Tier optimization additions
+  status            String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED, PAUSED
+  heuristicScore    Float    @default(0.0)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Source {
+  id        String    @id @default(uuid())
+  name      String
+  url       String
+  rssUrl    String    @unique
+  isActive  Boolean   @default(true)
+  articles  Article[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  lastSync  DateTime?
+}
+
+model SystemLog {
+  id        String   @id @default(uuid())
+  type      String   // 'ingestion', 'processing', 'digest', 'error'
+  status    String   // 'success', 'error', 'info'
+  message   String
+  details   String?  // JSON string
+  
+  createdAt DateTime @default(now())
+}
+
+model Integration {
+  id        String   @id @default(uuid())
+  provider  String   @unique // 'notion' | 'google-sheets'
+  apiKey    String?
+  config    String?  // JSON configuration (e.g., databaseId)
+  isActive  Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProcessingState {
+  id                String    @id @default("global")
+  isPaused          Boolean   @default(false)
+  resumeAt          DateTime?
+  articlesProcessed Int       @default(0)
+  articlesRemaining Int       @default(0)
+  etaMinutes        Int       @default(0)
+  currentBatch      Int       @default(0)
+  
+  updatedAt         DateTime  @updatedAt
+}
