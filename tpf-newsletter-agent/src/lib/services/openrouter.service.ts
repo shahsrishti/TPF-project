@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 
-// DeepSeek and Qwen free endpoints are deprecated. Using active free models.
-const PRIMARY_MODEL = 'openrouter/free';
-const FALLBACK_MODEL = 'google/gemma-4-31b-it:free';
+// Switched to official OpenAI models via OpenRouter
+const PRIMARY_MODEL = 'openai/gpt-4o-mini';
+const FALLBACK_MODEL = 'openai/gpt-4o';
 
 /**
  * OpenRouter Provider Abstraction Layer
