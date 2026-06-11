@@ -50,8 +50,8 @@ export async function triggerIngestion() {
       throw new Error(`Ingestion API responded with ${res.status}`)
     }
     
-    // Fire and forget the processing pipeline so we don't block the UI
-    fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/cron/process`, {
+    // AWAIT the process so Vercel doesn't kill the lambda prematurely
+    await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/cron/process`, {
       method: "GET",
       headers: { "Authorization": `Bearer ${process.env.CRON_SECRET}` }
     }).catch(e => console.error("Background processing failed:", e))

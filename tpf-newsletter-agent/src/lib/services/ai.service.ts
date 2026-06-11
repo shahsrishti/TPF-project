@@ -101,12 +101,12 @@ export async function processArticles() {
   const unprocessed = await prisma.article.findMany({
     where: { status: 'PENDING' },
     orderBy: { heuristicScore: 'desc' },
-    take: 15, // Process in small batches of 15
+    take: 8, // Process 8 at a time in parallel to fit Vercel timeout
   });
 
   if (unprocessed.length === 0) return { success: true, processedCount: 0, errors: [] };
 
-  // Update ETA (assume 5 seconds per article + 15 seconds batch overhead)
+  // Update ETA
   const etaMins = Math.ceil(((state?.articlesRemaining || 0) * 5) / 60);
   await prisma.processingState.update({
     where: { id: 'global' },
@@ -117,9 +117,8 @@ export async function processArticles() {
   let errors: string[] = [];
   let hitDailyQuota = false;
 
-  for (const article of unprocessed) {
-    if (hitDailyQuota) break; // Stop loop if quota hit
-
+  const processPromises = unprocessed.map(async (article) => {
+    if (hitDailyQuota) return; // Stop if quota hit
     try {
       // Mark as processing
       await prisma.article.update({
@@ -130,27 +129,24 @@ export async function processArticles() {
       const prompt = `Title: ${article.title}\n\nContent: ${article.contentSnippet}\n\nPlease analyze this article.`;
       
       let responseText = null;
-      let retries = 3;
+      let retries = 2;
       while (retries > 0 && !responseText) {
         try {
           responseText = await generateAIResponse(systemPrompt, prompt, true);
         } catch (err: any) {
           retries--;
           const errMsg = err.message || '';
-          // Detect hard quota limits
           if (errMsg.includes('429') || errMsg.includes('insufficient_quota')) {
              hitDailyQuota = true;
-             throw err; // Break out immediately
+             throw err; 
           }
           if (retries === 0) throw err;
-          const waitTime = (3 - retries) * 5000; 
-          console.log(`Rate limited or error. Retrying in ${waitTime/1000}s...`);
+          const waitTime = (2 - retries) * 1000; 
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       }
 
       if (!responseText) throw new Error("No response from AI Provider");
-
       const data = JSON.parse(responseText);
 
       await prisma.article.update({
@@ -168,9 +164,6 @@ export async function processArticles() {
         },
       });
       processedCount++;
-      
-      // Delay for 4.5 seconds to respect the 15 RPM free-tier limit
-      await new Promise(resolve => setTimeout(resolve, 4500));
     } catch (error: any) {
       if (hitDailyQuota) {
         console.warn(`\n[API LIMIT] Article ${article.id} skipped due to empty billing account credits.`);
@@ -179,24 +172,24 @@ export async function processArticles() {
       }
       errors.push(`Failed to process article ${article.id}: ${error.message}`);
       
-      // Revert status to PENDING if not completed
       await prisma.article.update({
         where: { id: article.id },
         data: { status: hitDailyQuota ? 'PAUSED' : 'FAILED' }
       });
-
-      if (hitDailyQuota) {
-        console.log("Daily quota exhausted. Pausing global queue for 24 hours.");
-        const resumeTime = new Date();
-        resumeTime.setHours(resumeTime.getHours() + 24); // Pause for 24 hours
-        
-        await prisma.processingState.update({
-          where: { id: 'global' },
-          data: { isPaused: true, resumeAt: resumeTime }
-        });
-        break; // Stop processing further
-      }
     }
+  });
+
+  await Promise.all(processPromises);
+
+  if (hitDailyQuota) {
+    console.log("Daily quota exhausted. Pausing global queue for 24 hours.");
+    const resumeTime = new Date();
+    resumeTime.setHours(resumeTime.getHours() + 24); 
+    
+    await prisma.processingState.update({
+      where: { id: 'global' },
+      data: { isPaused: true, resumeAt: resumeTime }
+    });
   }
 
   // Final update of state
